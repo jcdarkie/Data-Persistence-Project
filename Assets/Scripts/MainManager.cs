@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -12,16 +13,24 @@ public class MainManager : MonoBehaviour
 
     public Text ScoreText;
     public GameObject GameOverText;
+
+    public Text HighScoreText;
     
     private bool m_Started = false;
     private int m_Points;
+    private int highScore;
     
     private bool m_GameOver = false;
 
+    private string m_playerName;
+    private string highScorePlayerName = "";
     
     // Start is called before the first frame update
     void Start()
     {
+        LoadPlayerName();
+        LoadHighScore();
+
         const float step = 0.6f;
         int perLine = Mathf.FloorToInt(4.0f / step);
         
@@ -36,6 +45,15 @@ public class MainManager : MonoBehaviour
                 brick.onDestroyed.AddListener(AddPoint);
             }
         }
+
+        Debug.Log("game restarted");
+    }
+
+    private void LoadPlayerName()
+    {
+        DataManager.instance.LoadPlayerName();
+        m_playerName = DataManager.instance.playerName;
+        ScoreText.text = $" { m_playerName} 's Score : {m_Points}";
     }
 
     private void Update()
@@ -45,7 +63,7 @@ public class MainManager : MonoBehaviour
             if (Input.GetKeyDown(KeyCode.Space))
             {
                 m_Started = true;
-                float randomDirection = Random.Range(-1.0f, 1.0f);
+                float randomDirection = UnityEngine.Random.Range(-1.0f, 1.0f);
                 Vector3 forceDir = new Vector3(randomDirection, 1, 0);
                 forceDir.Normalize();
 
@@ -65,12 +83,43 @@ public class MainManager : MonoBehaviour
     void AddPoint(int point)
     {
         m_Points += point;
-        ScoreText.text = $"Score : {m_Points}";
+        ScoreText.text = $" { m_playerName} 's Score : {m_Points}";
     }
 
     public void GameOver()
     {
+        CheckScore();
         m_GameOver = true;
         GameOverText.SetActive(true);
+    }
+
+    private void CheckScore()
+    {
+        if(m_Points > DataManager.instance.highScore)
+        {
+            SetHighScore();
+        }
+    }
+
+    private void SetHighScore()
+    {
+        highScorePlayerName = m_playerName;
+        highScore = m_Points;
+
+        DataManager.instance.SaveHighScore(highScorePlayerName, highScore);
+
+        HighScoreText.text = $"Best Score: {highScorePlayerName} : {highScore}";
+    }
+
+    private void LoadHighScore()
+    {
+        DataManager.instance.LoadHighScore();
+
+        highScorePlayerName = DataManager.instance.highScorePlayerName;
+        highScore = DataManager.instance.highScore;
+
+        HighScoreText.text = $"Best Score: {highScorePlayerName} : {highScore}";
+
+        Debug.Log(highScorePlayerName);
     }
 }
